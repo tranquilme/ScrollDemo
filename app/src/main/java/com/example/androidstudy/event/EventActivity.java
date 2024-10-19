@@ -13,7 +13,6 @@ import com.example.androidstudy.R;
 
 public class EventActivity extends AppCompatActivity {
 
-    public static final String TAG = "Event.class";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

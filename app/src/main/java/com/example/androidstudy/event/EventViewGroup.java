@@ -33,14 +33,12 @@ public class EventViewGroup extends FrameLayout {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        Log.d(EventActivity.TAG, "dispatchTouchEvent: ViewGroup===========" + MotionEvent.actionToString(ev.getAction()));
 
         return super.dispatchTouchEvent(ev);
     }
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        Log.d(EventActivity.TAG, "onInterceptTouchEvent: ViewGroup===========" + MotionEvent.actionToString(ev.getAction()));
 
         if (ev.getAction() == MotionEvent.ACTION_MOVE) {
             return true;
@@ -51,7 +49,6 @@ public class EventViewGroup extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        Log.d(EventActivity.TAG, "onTouchEvent: ViewGroup===========" + MotionEvent.actionToString(event.getAction()));
 
         return super.onTouchEvent(event);
     }

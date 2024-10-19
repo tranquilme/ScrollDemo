@@ -1,5 +1,7 @@
 package com.example.androidstudy.mynestedwebview;
 
+import static com.example.androidstudy.utils.ConstModel.TAG;
+
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -22,9 +24,10 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
 
     private NestedScrollingChildHelper nestedScrollingChildHelper;
     private int[] consumed = new int[2];
+    private int[] mNestedOffsets = new int[2];
+    private final int[] mScrollOffset = new int[2];
     private float lastY;
-    private boolean isDownClick;
-    private OverScroller scroller;
+    private Scroller scroller;
     private VelocityTracker velocityTracker;
     private boolean hasFling = false;
 
@@ -38,41 +41,36 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
 
     public MyWebview(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-
         init();
     }
-
-    private void init() {
-        nestedScrollingChildHelper = new NestedScrollingChildHelper(this);
-        nestedScrollingChildHelper.setNestedScrollingEnabled(true);
-        scroller = new OverScroller(getContext());
-        velocityTracker = VelocityTracker.obtain();
-    }
-
+    // ==============================================================================================
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        MotionEvent recordEvent = MotionEvent.obtain(event);
+        recordEvent.offsetLocation(mNestedOffsets[0], mNestedOffsets[1]);
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 nestedScrollingChildHelper.startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL);
-                lastY = event.getY();
-                isDownClick = true;
+                lastY = event.getRawY();
                 hasFling = false;
 
                 if (!scroller.isFinished()) {
                     scroller.abortAnimation();
                 }
 
+                initOrResetVelocityTracker();
+
                 break;
             case MotionEvent.ACTION_MOVE:
-                int dy = (int) (lastY - event.getY());
-                lastY = event.getY();
-                velocityTracker.addMovement(event);
-
-                nestedScrollingChildHelper.dispatchNestedPreScroll(0, dy, consumed, null);
-                dy -= consumed[1];
-                Log.d(ConstModel.TAG, "onTouchEvent: Webview scrollBy" + -dy + "scroll dy=" + getScrollY());
-
-                scrollBy(0, -dy);
+                int dy = (int) (lastY - event.getRawY());
+                lastY = event.getRawY();
+                velocityTracker.addMovement(recordEvent);
+                if (!nestedScrollingChildHelper.dispatchNestedPreScroll(0, dy, consumed, mScrollOffset)) {
+                    scrollBy(0, dy);
+                } else {
+                    mNestedOffsets[0] += mScrollOffset[0];
+                    mNestedOffsets[1] += mScrollOffset[1];
+                }
 
                 if (Math.abs(dy) > 5) {
                     event.setAction(MotionEvent.ACTION_CANCEL);
@@ -80,13 +78,12 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
 
                 break;
             case MotionEvent.ACTION_UP:
-                isDownClick = false;
-
                 velocityTracker.computeCurrentVelocity(1000, Integer.MAX_VALUE);
                 int velocityY = (int) -velocityTracker.getYVelocity();
-                scroller.fling(0, getScrollY(), 0, velocityY, 0, 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
-                scroller.computeScrollOffset();
-                Log.d(ConstModel.TAG, "onTouchEvent: ACTION_UP" + velocityY + " scrollY=" + getScrollY());
+                Log.d(TAG, "velocityTrackervelocityY: " + velocityY);
+                recycleVelocityTracker();
+
+                flingScroll(0, velocityY);
                 invalidate();
                 break;
 
@@ -96,39 +93,64 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
     }
 
     @Override
+    public void flingScroll(int vx, int vy) {
+        int startY = (int) (getContentHeight() * getScale() - getHeight());
+        if (getScrollY() < startY) {
+            startY = getScrollY();
+        }
+        scroller.fling(0, startY, 0, vy, 0, Integer.MAX_VALUE, 0, Integer.MAX_VALUE);
+        invalidate();
+    }
+
+    @Override
     public void computeScroll() {
         if (scroller.computeScrollOffset()) {
-            int dy = scroller.getCurrY() - getScrollY();
-            int[] consumed = new int[2];
-
             scrollTo(0, scroller.getCurrY());
             invalidate();
-
-            Log.d(ConstModel.TAG, "isScrollToBottom()" + isScrollToBottom() + "hasFling   " + hasFling);
-
-            if (!hasFling && isScrollToBottom()) {
-//                nestedScrollingChildHelper.dispatchNestedPreScroll(0, dy, consumed, null);
-
-                Log.d(ConstModel.TAG, "computeScroll: scroller.getCurrVelocity()" + scroller.getCurrVelocity());
-
+            if (!hasFling && scroller.getStartY() < scroller.getCurrY() && isScrollToBottom()) {
                 nestedScrollingChildHelper.dispatchNestedPreFling(0, scroller.getCurrVelocity());
                 hasFling = true;
             }
         }
     }
 
-    public boolean isDownClick() {
-        return isDownClick;
+    // ==============================================================================================
+
+    public boolean isScrollToBottom() {
+        float contentHeight = getContentHeight() * getScale();
+        return getScrollY() >= contentHeight - getHeight() - 5;
     }
 
     @Override
-    public boolean startNestedScroll(int axes, int type) {
-        return false;
+    public void scrollBy(int x, int y) {
+        int newY = getScrollY() + y;
+        if (newY < 0) {
+            newY = 0;
+        }
+
+        scrollTo(x, newY);
     }
 
-    @Override
-    public void stopNestedScroll(int type) {
+    private void init() {
+        nestedScrollingChildHelper = new NestedScrollingChildHelper(this);
+        nestedScrollingChildHelper.setNestedScrollingEnabled(true);
+        scroller = new Scroller(getContext());
+        velocityTracker = VelocityTracker.obtain();
+    }
 
+    private void initOrResetVelocityTracker() {
+        if (velocityTracker == null) {
+            velocityTracker = VelocityTracker.obtain();
+        } else {
+            velocityTracker.clear();
+        }
+    }
+
+    private void recycleVelocityTracker() {
+        if (velocityTracker != null) {
+            velocityTracker.recycle();
+            velocityTracker = null;
+        }
     }
 
     @Override
@@ -146,18 +168,13 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
         return false;
     }
 
-    public boolean isScrollToBottom() {
-        float contentHeight = getContentHeight() * getScale();
-        return getScrollY() >= contentHeight - Utils.dpToPx(getContext(), 400) - 5;
+    @Override
+    public boolean startNestedScroll(int axes, int type) {
+        return false;
     }
 
     @Override
-    public void scrollBy(int x, int y) {
-        int newY = getScrollY() + y;
-        if (newY < 0) {
-            newY = 0;
-        }
+    public void stopNestedScroll(int type) {
 
-        scrollTo(x, newY);
     }
 }

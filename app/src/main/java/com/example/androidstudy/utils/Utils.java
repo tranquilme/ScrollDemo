@@ -1,5 +1,7 @@
 package com.example.androidstudy.utils;
 
+
+
 import android.content.Context;
 
 public class Utils {
@@ -8,6 +10,10 @@ public class Utils {
         float density = context.getResources().getDisplayMetrics().density;
         // 将 dp 转换为 px，公式是 dp * density
         return Math.round(dp * density);
+    }
+
+    public static int getScreenHeight(Context context) {
+        return context.getResources().getDisplayMetrics().heightPixels;
     }
 
 }

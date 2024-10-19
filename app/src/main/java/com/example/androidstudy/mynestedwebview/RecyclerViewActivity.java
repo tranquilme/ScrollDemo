@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.androidstudy.R;
+import com.example.androidstudy.utils.Utils;
 
 public class RecyclerViewActivity extends AppCompatActivity {
 
@@ -31,6 +32,7 @@ public class RecyclerViewActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         mAdapter = new CustomAdapter();
         recyclerView.setAdapter(mAdapter);
+        recyclerView.getLayoutParams().height = Utils.getScreenHeight(this);
 
         initWebview();
     }
@@ -43,6 +45,7 @@ public class RecyclerViewActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
         webView.loadUrl("https://www.cnblogs.com/xxxxxx.html");
+        webView.getLayoutParams().height = Utils.getScreenHeight(this);
     }
 
 

@@ -29,7 +29,6 @@ public class EventView extends View {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
-        Log.d(EventActivity.TAG, "dispatchTouchEvent: View===========" + MotionEvent.actionToString(event.getAction()));
 
 //        if (event.getAction() == MotionEvent.ACTION_DOWN) {
 //            getParent().requestDisallowInterceptTouchEvent(true);
@@ -40,7 +39,6 @@ public class EventView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        Log.d(EventActivity.TAG, "onTouchEvent: View===========" + MotionEvent.actionToString(event.getAction()));
 
 
         return super.onTouchEvent(event);

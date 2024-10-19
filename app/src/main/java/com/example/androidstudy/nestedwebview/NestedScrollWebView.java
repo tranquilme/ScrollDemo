@@ -1,6 +1,6 @@
 package com.example.androidstudy.nestedwebview;
 
-
+import static com.example.androidstudy.utils.ConstModel.TAG;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -93,12 +93,15 @@ public class NestedScrollWebView extends WebView implements NestedScrollingChild
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
-                if (isParentResetScroll() && velocityTracker != null) {
+                if (velocityTracker != null) {
                     velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
                     int yVelocity = (int) -velocityTracker.getYVelocity();
                     recycleVelocityTracker();
                     isSelfFling = true;
                     flingScroll(0, yVelocity);
+
+                    Log.d(TAG, "onTouchEventvy: " + yVelocity);
+
                 }
                 break;
         }
@@ -112,34 +115,31 @@ public class NestedScrollWebView extends WebView implements NestedScrollingChild
         if (getScrollY() < startY) {
             startY = getScrollY();
         }
+
+        Log.d(TAG, "flingScrollvy: " + vy);
+
         scroller.fling(0, startY, 0, vy, 0, Integer.MAX_VALUE, 0, Integer.MAX_VALUE);
 //        scroller.computeScrollOffset();
         invalidate();
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        recycleVelocityTracker();
-        stopScroll();
-        childHelper = null;
-        scroller = null;
-        parent = null;
-    }
 
     @Override
     public void computeScroll() {
         if (scroller.computeScrollOffset()) {
             final int currY = scroller.getCurrY();
+            Log.d(TAG, "computeScrollCury: " + currY);
 //            if (!isSelfFling) {//parent fling
 //                scrollTo(0, currY);
 //                invalidate();
 //                return;
 //            }
-            if (isWebViewCanScroll()) {
+//            if (isWebViewCanScroll()) {
                 scrollTo(0, currY);
                 invalidate();
-            }
+//            }
+
+            Log.d(TAG, "computeScrollvy: " + scroller.getCurrVelocity());
 
             Log.d(ConstModel.TAG, "nested scroll view computeScroll: " + (scroller.getCurrY() - getScrollY()));
 
@@ -171,6 +171,16 @@ public class NestedScrollWebView extends WebView implements NestedScrollingChild
                 dispatchNestedScroll(1, 0, 0, 0, null);
             }
         }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        recycleVelocityTracker();
+        stopScroll();
+        childHelper = null;
+        scroller = null;
+        parent = null;
     }
 
     void stopScroll() {
@@ -237,15 +247,6 @@ public class NestedScrollWebView extends WebView implements NestedScrollingChild
             return false;
         }
         return offset < range - 3;
-    }
-
-    private boolean isWebViewCanScroll() {
-        final int offset = getScrollY();
-        final int range = getWebViewContentHeight() - getHeight();
-        if (range == 0) {
-            return false;
-        }
-        return offset > 0 || offset < range - 3;
     }
 
     private int getWebViewContentHeight() {

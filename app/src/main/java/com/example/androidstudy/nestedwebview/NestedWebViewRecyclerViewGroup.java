@@ -232,16 +232,6 @@ public class NestedWebViewRecyclerViewGroup extends ViewGroup implements NestedS
     }
 
     /**
-     * 特殊的布局中，如果无法获取到RecyclerView，请手动设置
-     */
-    public void setRecyclerView(RecyclerView recyclerView) {
-        if (this.recyclerView != null) {
-            return;
-        }
-        this.recyclerView = recyclerView;
-    }
-
-    /**
      * 只用于处理父控件的fling事件，其他的事件不处理
      */
     @Override
@@ -267,7 +257,7 @@ public class NestedWebViewRecyclerViewGroup extends ViewGroup implements NestedS
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
-                Log.d(ConstModel.TAG, "dispatchTouchEvent: ACTION_UP   " + "isParentCenter()  " + isParentCenter());
+//                Log.d(ConstModel.TAG, "dispatchTouchEvent: ACTION_UP   " + "isParentCenter()  " + isParentCenter());
 //                if (isParentCenter() && velocityTracker != null) {
 //                    //处理连接处的父控件fling事件
 //                    velocityTracker.computeCurrentVelocity(1000, maximumVelocity);
@@ -276,7 +266,7 @@ public class NestedWebViewRecyclerViewGroup extends ViewGroup implements NestedS
 //                    recycleVelocityTracker();
 //                    parentFling(yVelocity);
 //                }
-                break;
+//                break;
         }
         return super.dispatchTouchEvent(event);
     }
@@ -375,15 +365,6 @@ public class NestedWebViewRecyclerViewGroup extends ViewGroup implements NestedS
     }
 
     @Override
-    public boolean onNestedFling(@NonNull View target, float velocityX, float velocityY, boolean consumed) {
-//        if (Util.isAboveL()) {
-            return super.onNestedFling(target, velocityX, velocityY, consumed);
-//        } else {
-//            return false;
-//        }
-    }
-
-    @Override
     public void onNestedPreScroll(@NonNull View view, int dx, int dy, @NonNull int[] ints, int type) {
         boolean isWebViewBottom = !canWebViewScrollDown();
         boolean isParentCenter = isParentCenter();
@@ -396,6 +377,7 @@ public class NestedWebViewRecyclerViewGroup extends ViewGroup implements NestedS
             ints[1] = dy;
         } else if (dy < 0 && isParentCenter) {
             //为了RecyclerView滑动到顶部时，继续向上滑动父控件
+            Log.d(ConstModel.TAG, "为了RecyclerView滑动到顶部时，继续向上滑动父控件: " + dy);
             scrollBy(0, dy);
             ints[1] = dy;
         }
@@ -485,6 +467,7 @@ public class NestedWebViewRecyclerViewGroup extends ViewGroup implements NestedS
                 case SCROLL_RV_PARENT://RecyclerView向父控件滑动，fling事件，单纯用于计算速度
                     if (getScrollY() != 0) {
                         invalidate();
+                        Log.d(ConstModel.TAG, "RecyclerView向父控件滑动，fling事件，单纯用于计算速度: " + getScrollY());
                     } else if (!hasFling) {
                         hasFling = true;
                         //滑动到顶部时，滚动事件交给WebView
@@ -569,11 +552,6 @@ public class NestedWebViewRecyclerViewGroup extends ViewGroup implements NestedS
         }
         isRvShow = recyclerView.isShown();
     }
-
-    public void setOnScrollListener(onScrollListener listener) {
-        this.listener = listener;
-    }
-
     /**
      * 获取当前的滑动距离
      */
@@ -619,25 +597,6 @@ public class NestedWebViewRecyclerViewGroup extends ViewGroup implements NestedS
             ViewGroup.LayoutParams params = webView.getLayoutParams();
             params.height = height;
             webView.setLayoutParams(params);
-        }
-    }
-
-    /**
-     * 滚动到某个位置
-     */
-    public void scrollToPosition(int y) {
-        if (webView == null) return;
-        int webViewContentHeight = getWebViewContentHeight();
-        if (webViewContentHeight == 0) return;
-        int webH = webViewContentHeight - webViewHeight;
-        if (y <= webH) {
-            webView.scrollTo(0, y);
-        } else if (y <= webH + webViewHeight) {
-            scrollToWebViewBottom();
-            scrollTo(0, y - webH);
-        } else {
-            scrollToWebViewBottom();
-            scrollTo(0, webViewHeight);
         }
     }
 
