@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.example.androidstudy.suspend.SuspendedLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    >
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="60dp"
+        android:paddingBottom="60dp"
+        android:text="HEADER"
+        android:textSize="100dp"
+        android:paddingLeft="10dp"
+        android:textColor="#222222"
+        android:background="#BBFFFF"/>
+
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/vContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/clickable"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/hello_blank_fragment"
+                android:textColor="#222222"
+                android:textSize="100sp"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/hello_blank_fragment"
+                android:textColor="#222222"
+                android:textSize="100sp"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/hello_blank_fragment"
+                android:textColor="#222222"
+                android:textSize="100sp"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/hello_blank_fragment"
+                android:textColor="#222222"
+                android:textSize="100sp"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/hello_blank_fragment"
+                android:textColor="#222222"
+                android:textSize="100sp"/>
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</com.example.androidstudy.suspend.SuspendedLayout>

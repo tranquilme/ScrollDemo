@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.example.androidstudy.mynestedwebview.NestedViewGroup
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    >
+
+    <com.example.androidstudy.mynestedwebview.MyWebview
+        android:id="@+id/my_webview"
+        android:layout_width="match_parent"
+        android:layout_height="400dp"
+        />
+
+    <com.example.androidstudy.mynestedwebview.MyRecyclerView
+        android:id="@+id/my_recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="400dp"
+        android:background="#BBFFFF
+"
+        />
+
+</com.example.androidstudy.mynestedwebview.NestedViewGroup>
