@@ -4,7 +4,10 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.webkit.WebView;
+import android.widget.OverScroller;
+import android.widget.Scroller;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,6 +24,9 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
     private int[] consumed = new int[2];
     private float lastY;
     private boolean isDownClick;
+    private OverScroller scroller;
+    private VelocityTracker velocityTracker;
+    private boolean hasFling = false;
 
     public MyWebview(@NonNull Context context) {
         this(context, null);
@@ -39,6 +45,8 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
     private void init() {
         nestedScrollingChildHelper = new NestedScrollingChildHelper(this);
         nestedScrollingChildHelper.setNestedScrollingEnabled(true);
+        scroller = new OverScroller(getContext());
+        velocityTracker = VelocityTracker.obtain();
     }
 
     @Override
@@ -48,10 +56,17 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
                 nestedScrollingChildHelper.startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL);
                 lastY = event.getY();
                 isDownClick = true;
+                hasFling = false;
+
+                if (!scroller.isFinished()) {
+                    scroller.abortAnimation();
+                }
+
                 break;
             case MotionEvent.ACTION_MOVE:
-                int dy = (int) (event.getY() - lastY);
+                int dy = (int) (lastY - event.getY());
                 lastY = event.getY();
+                velocityTracker.addMovement(event);
 
                 nestedScrollingChildHelper.dispatchNestedPreScroll(0, dy, consumed, null);
                 dy -= consumed[1];
@@ -66,11 +81,40 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
                 break;
             case MotionEvent.ACTION_UP:
                 isDownClick = false;
+
+                velocityTracker.computeCurrentVelocity(1000, Integer.MAX_VALUE);
+                int velocityY = (int) -velocityTracker.getYVelocity();
+                scroller.fling(0, getScrollY(), 0, velocityY, 0, 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+                scroller.computeScrollOffset();
+                Log.d(ConstModel.TAG, "onTouchEvent: ACTION_UP" + velocityY + " scrollY=" + getScrollY());
+                invalidate();
                 break;
 
         }
 
         return super.onTouchEvent(event);
+    }
+
+    @Override
+    public void computeScroll() {
+        if (scroller.computeScrollOffset()) {
+            int dy = scroller.getCurrY() - getScrollY();
+            int[] consumed = new int[2];
+
+            scrollTo(0, scroller.getCurrY());
+            invalidate();
+
+            Log.d(ConstModel.TAG, "isScrollToBottom()" + isScrollToBottom() + "hasFling   " + hasFling);
+
+            if (!hasFling && isScrollToBottom()) {
+//                nestedScrollingChildHelper.dispatchNestedPreScroll(0, dy, consumed, null);
+
+                Log.d(ConstModel.TAG, "computeScroll: scroller.getCurrVelocity()" + scroller.getCurrVelocity());
+
+                nestedScrollingChildHelper.dispatchNestedPreFling(0, scroller.getCurrVelocity());
+                hasFling = true;
+            }
+        }
     }
 
     public boolean isDownClick() {

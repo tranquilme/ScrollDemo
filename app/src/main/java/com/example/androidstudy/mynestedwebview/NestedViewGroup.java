@@ -62,6 +62,9 @@ public class NestedViewGroup extends LinearLayout implements NestedScrollingPare
 //
 //        Log.d(ConstModel.TAG, "onNestedFling: " + velocityY);
 
+
+
+
         return true;
     }
 
@@ -80,9 +83,24 @@ public class NestedViewGroup extends LinearLayout implements NestedScrollingPare
 
 
         if (target instanceof MyWebview) {
+
+            Log.d(ConstModel.TAG, "onNestedPreScroll: Webview dy===" + dy);
             if (((MyWebview) target).isScrollToBottom()) {
-                scrollBy(0, -dy);
-                consumed[1] = dy;
+
+
+                if (dy > 0) {
+
+                    if (getScrollY() < getWebviewHeight()) {
+                        Log.d(ConstModel.TAG, "getScrollY = " + getScrollY() + "  webviewHeight = " + getWebviewHeight());
+
+                        scrollBy(0, dy);
+                        consumed[1] = dy;
+                    } else {
+                        Log.d(ConstModel.TAG, "onNestedPreScroll: toRecyclerView dy" + dy);
+                        getRecyclerView().scrollBy(0, dy);
+                    }
+
+                }
             }
         }
 
@@ -115,7 +133,26 @@ public class NestedViewGroup extends LinearLayout implements NestedScrollingPare
 
     @Override
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
-        Log.d(ConstModel.TAG, "onNestedPreFling: " + velocityY);
+        if (target instanceof MyWebview) {
+
+
+            if (velocityY > 0 && ((MyWebview) target).isScrollToBottom()) {
+
+
+
+                getRecyclerView().fling(0, (int) velocityY);
+            }
+        }
+
+        if (target instanceof MyRecyclerView) {
+            Log.d(ConstModel.TAG, "onNestedFling: " + velocityY + "((MyRecyclerView) target).isScrollToTop()" + ((MyRecyclerView) target).isScrollToTop());
+            if (velocityY < 0 && ((MyRecyclerView) target).isScrollToTop()) {
+
+
+
+                getWebview().flingScroll(0, (int) velocityY);
+            }
+        }
 
 
 //        return true;

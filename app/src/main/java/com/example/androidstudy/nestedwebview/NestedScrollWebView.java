@@ -3,6 +3,7 @@ package com.example.androidstudy.nestedwebview;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -15,6 +16,7 @@ import androidx.core.view.NestedScrollingChild2;
 import androidx.core.view.NestedScrollingChildHelper;
 import androidx.core.view.ViewCompat;
 
+import com.example.androidstudy.utils.ConstModel;
 import com.example.androidstudy.utils.Utils;
 
 /**
@@ -138,6 +140,9 @@ public class NestedScrollWebView extends WebView implements NestedScrollingChild
                 scrollTo(0, currY);
                 invalidate();
             }
+
+            Log.d(ConstModel.TAG, "nested scroll view computeScroll: " + (scroller.getCurrY() - getScrollY()));
+
             if (!hasFling && scroller.getStartY() < currY
                     && !canWebViewScrollDown()
                     && startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL)

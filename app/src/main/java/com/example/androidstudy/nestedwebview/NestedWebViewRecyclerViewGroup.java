@@ -267,14 +267,15 @@ public class NestedWebViewRecyclerViewGroup extends ViewGroup implements NestedS
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
-                if (isParentCenter() && velocityTracker != null) {
-                    //处理连接处的父控件fling事件
-                    velocityTracker.computeCurrentVelocity(1000, maximumVelocity);
-                    int yVelocity = (int) -velocityTracker.getYVelocity();
-                    currentScrollType = yVelocity > 0 ? SCROLL_WEB_PARENT : SCROLL_PARENT_WEB;
-                    recycleVelocityTracker();
-                    parentFling(yVelocity);
-                }
+                Log.d(ConstModel.TAG, "dispatchTouchEvent: ACTION_UP   " + "isParentCenter()  " + isParentCenter());
+//                if (isParentCenter() && velocityTracker != null) {
+//                    //处理连接处的父控件fling事件
+//                    velocityTracker.computeCurrentVelocity(1000, maximumVelocity);
+//                    int yVelocity = (int) -velocityTracker.getYVelocity();
+//                    currentScrollType = yVelocity > 0 ? SCROLL_WEB_PARENT : SCROLL_PARENT_WEB;
+//                    recycleVelocityTracker();
+//                    parentFling(yVelocity);
+//                }
                 break;
         }
         return super.dispatchTouchEvent(event);
@@ -354,6 +355,9 @@ public class NestedWebViewRecyclerViewGroup extends ViewGroup implements NestedS
     public boolean onNestedPreFling(@NonNull View target, float velocityX, float velocityY) {
         if (target instanceof NestedScrollWebView) {
             //WebView滑到底部时，继续向下滑动父控件和RV
+
+            Log.d(ConstModel.TAG, "onNestedPreFling: " + velocityY);
+
             currentScrollType = SCROLL_WEB_PARENT;
             parentFling(velocityY);
         } else if (target instanceof RecyclerView && velocityY < 0 && getScrollY() == maxScrollY) {
