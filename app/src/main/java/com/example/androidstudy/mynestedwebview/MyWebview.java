@@ -30,6 +30,8 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
     private Scroller scroller;
     private VelocityTracker velocityTracker;
     private boolean hasFling = false;
+    private int mLastFlingX;
+    private int mLastFlingY;
 
     public MyWebview(@NonNull Context context) {
         this(context, null);
@@ -53,6 +55,7 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
                 nestedScrollingChildHelper.startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL);
                 lastY = event.getRawY();
                 hasFling = false;
+                mLastFlingY = 0;
 
                 if (!scroller.isFinished()) {
                     scroller.abortAnimation();
@@ -98,6 +101,7 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
         if (getScrollY() < startY) {
             startY = getScrollY();
         }
+        mLastFlingY = startY;
         scroller.fling(0, startY, 0, vy, 0, Integer.MAX_VALUE, 0, Integer.MAX_VALUE);
         invalidate();
     }
@@ -105,12 +109,17 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
     @Override
     public void computeScroll() {
         if (scroller.computeScrollOffset()) {
-            scrollTo(0, scroller.getCurrY());
-            invalidate();
-            if (!hasFling && scroller.getStartY() < scroller.getCurrY() && isScrollToBottom()) {
-                nestedScrollingChildHelper.dispatchNestedPreFling(0, scroller.getCurrVelocity());
-                hasFling = true;
+            int dy = scroller.getCurrY() - mLastFlingY;
+            Log.d(TAG, " scroller.getCurrY(): " + dy);
+            mLastFlingY = scroller.getCurrY();
+            consumed[0] = 0;
+            consumed[1] = 0;
+            if (dy != 0 && !nestedScrollingChildHelper.dispatchNestedPreScroll(0, dy, consumed, null)) {
+                Log.d(TAG, "computeScroll: scroller.getCurrY()" + scroller.getCurrY());
+                scrollBy(0, dy);
             }
+            // 马达启动
+            invalidate();
         }
     }
 
@@ -118,7 +127,14 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
 
     public boolean isScrollToBottom() {
         float contentHeight = getContentHeight() * getScale();
-        return getScrollY() >= contentHeight - getHeight() - 5;
+
+        Log.d(TAG, "isScrollToBottom: getScrolly" + getScrollY() +"content=" + (contentHeight - getHeight()));
+
+        return getScrollY() >= contentHeight - getHeight();
+    }
+
+    public void stopScroll() {
+        scroller.abortAnimation();
     }
 
     @Override

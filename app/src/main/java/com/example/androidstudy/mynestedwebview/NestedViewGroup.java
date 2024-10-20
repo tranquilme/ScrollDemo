@@ -22,13 +22,6 @@ import com.example.androidstudy.utils.ConstModel;
 import java.lang.reflect.Method;
 
 public class NestedViewGroup extends LinearLayout implements NestedScrollingParent2 {
-    private Scroller scroller;
-
-    private static final int FLING_FLAG_RECYCLERVIEW_DOWN = 1;
-    private static final int FLING_FLAG_WEBVIEW_UP = 2;
-    private int flingFlag;
-    private boolean hasFling;
-    private VelocityTracker velocityTracker;
 
     public NestedViewGroup(Context context) {
         this(context, null);
@@ -44,21 +37,27 @@ public class NestedViewGroup extends LinearLayout implements NestedScrollingPare
         init();
     }
 
+    //================================================================================================
     @Override
     public void onNestedPreScroll(@NonNull View target, int dx, int dy, @NonNull int[] consumed, int type) {
         if (target instanceof MyWebview) {
             if (((MyWebview) target).isScrollToBottom()) {
+                Log.d(TAG, "((MyWebview) target).isScrollToBottom(): " + dy);
 
                 if (dy > 0) {
+                    Log.d(TAG, "getScrollY() < getWebviewHeight() getY: " + getScrollY() + " web=" + getWebviewHeight());
+
                     if (getScrollY() < getWebviewHeight()) {
                         scrollBy(0, dy);
                         consumed[1] = dy;
                     } else {
-                        getRecyclerView().scrollBy(0, dy);
+                        Log.d(TAG, "onNestedPreScroll: getRecyclerView().scrollBy = " + dy);
 
-                        Log.d(TAG, "onNestedPreScroll: ");
+                        getRecyclerView().scrollBy(0, dy);
+                        consumed[1] = dy;
                     }
                 } else if (dy < 0) {
+                    Log.d(TAG, "onNestedPreScroll: if (dy < 0)" + getScrollY());
                     if (getScrollY() > 0) {
                         scrollBy(0, dy);
                         consumed[1] = dy;
@@ -69,11 +68,15 @@ public class NestedViewGroup extends LinearLayout implements NestedScrollingPare
 
         if (target instanceof MyRecyclerView) {
             if (dy < 0) {
-                if (getScrollY() > 0 && getRecyclerView().isScrollToTop()) {
-                    Log.d(TAG, "onNestedPreScroll: isScrollToTop" + dy);
+                if (getRecyclerView().isScrollToTop()) {
+                    if (getScrollY() > 0) {
+                        scrollBy(0, dy);
+                        consumed[1] = dy;
+                    } else {
+                        getWebview().scrollBy(0, dy);
+                        consumed[1] = dy;
+                    }
 
-                    scrollBy(0, dy);
-                    consumed[1] = dy;
                 }
             } else if (dy > 0) {
                 if (getScrollY() < getWebviewHeight()) {
@@ -85,70 +88,14 @@ public class NestedViewGroup extends LinearLayout implements NestedScrollingPare
             }
         }
     }
-
-    @Override
-    public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
-        if (target instanceof MyWebview) {
-            if (velocityY > 0) {
-                flingFlag = FLING_FLAG_WEBVIEW_UP;
-                hasFling = false;
-                parentFling((int) velocityY);
-            }
-        }
-
-        if (target instanceof MyRecyclerView) {
-            if (velocityY < 0) {
-                Log.d(TAG, "FLING_FLAG_WEBVIEW_UP:velocityY " + velocityY);
-                flingFlag = FLING_FLAG_RECYCLERVIEW_DOWN;
-                hasFling = false;
-                parentFling((int) velocityY);
-            }
-        }
-
-//        return true;
-        return super.onNestedPreFling(target, velocityX, velocityY);
-    }
-
-    public void parentFling(int vy) {
-        scroller.fling(0, getScrollY(), 0,vy, 0, Integer.MAX_VALUE, 0, Integer.MAX_VALUE);
-        scroller.computeScrollOffset();
-        invalidate();
-    }
-
-    @Override
-    public void computeScroll() {
-        super.computeScroll();
-
-        if (scroller.computeScrollOffset()) {
-
-            int curY = scroller.getCurrY();
-            switch (flingFlag) {
-                case FLING_FLAG_RECYCLERVIEW_DOWN:
-                    if (getScrollY() > 0) {
-                        invalidate();
-                    } else if (!hasFling) {
-                        hasFling = true;
-                        getWebview().flingScroll(0, (int) -scroller.getCurrVelocity());
-                    }
-                    break;
-                case FLING_FLAG_WEBVIEW_UP:
-                    if (curY < getWebviewHeight()) {
-                        scrollTo(0, scroller.getCurrY());
-                        invalidate();
-                    } else if (!hasFling) {
-                        hasFling = true;
-                        getRecyclerView().fling(0, (int) scroller.getCurrVelocity());
-                    }
-                    break;
-            }
-        }
-    }
+    //================================================================================================
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-            // RecyclerView Scroll马达即使在传递了Fling之后仍然会一直启动，需要手动关闭
+            // 关闭View内部Scroll马达
             getRecyclerView().stopScroll();
+            getWebview().stopScroll();
         }
 
         return super.dispatchTouchEvent(ev);
@@ -218,7 +165,6 @@ public class NestedViewGroup extends LinearLayout implements NestedScrollingPare
     }
 
     private void init() {
-        scroller = new Scroller(getContext());
     }
 
 }
