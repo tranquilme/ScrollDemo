@@ -27,6 +27,11 @@ public class RecyclerViewActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recycler_view);
+        RecyclerView firstRecyclerview = findViewById(R.id.first_recyclerview);
+        firstRecyclerview.setLayoutManager(new LinearLayoutManager(this));
+        CustomAdapter firstAdapter = new CustomAdapter();
+        firstRecyclerview.setAdapter(firstAdapter);
+        firstRecyclerview.getLayoutParams().height = Utils.getScreenHeight(this);
 
         RecyclerView recyclerView = findViewById(R.id.my_recyclerview);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -47,7 +52,6 @@ public class RecyclerViewActivity extends AppCompatActivity {
         webView.loadUrl("https://www.cnblogs.com/xxxxxx.html");
         webView.getLayoutParams().height = Utils.getScreenHeight(this);
     }
-
 
     // 自定义Adapter
     class CustomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
