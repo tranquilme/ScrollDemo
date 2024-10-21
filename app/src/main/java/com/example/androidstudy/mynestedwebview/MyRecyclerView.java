@@ -2,13 +2,8 @@ package com.example.androidstudy.mynestedwebview;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
-import android.view.View;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.NestedScrollingParent2;
-import androidx.core.view.NestedScrollingParentHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class MyRecyclerView extends RecyclerView {
@@ -25,7 +20,11 @@ public class MyRecyclerView extends RecyclerView {
         super(context, attrs, defStyleAttr);
     }
 
-    public boolean isScrollToTop() {
-        return !canScrollVertically(-1);
+    public boolean canScrollUp() {
+        return canScrollVertically(1);
+    }
+
+    public boolean canScrollDown() {
+        return canScrollVertically(-1);
     }
 }

@@ -3,12 +3,12 @@ package com.example.androidstudy.mynestedwebview;
 import static com.example.androidstudy.utils.ConstModel.TAG;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.webkit.WebView;
-import android.widget.OverScroller;
 import android.widget.Scroller;
 
 import androidx.annotation.NonNull;
@@ -16,9 +16,6 @@ import androidx.annotation.Nullable;
 import androidx.core.view.NestedScrollingChild2;
 import androidx.core.view.NestedScrollingChildHelper;
 import androidx.core.view.ViewCompat;
-
-import com.example.androidstudy.utils.ConstModel;
-import com.example.androidstudy.utils.Utils;
 
 public class MyWebview extends WebView implements NestedScrollingChild2 {
 
@@ -119,8 +116,12 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
         return getScrollY() >= contentHeight - getHeight();
     }
 
-    public boolean canScroll() {
-        return canScrollVertically(-1) || canScrollVertically(1);
+    public boolean canScrollDown() {
+        return canScrollVertically(-1);
+    }
+
+    public boolean canScrollUp() {
+        return canScrollVertically(1);
     }
 
     public boolean isScrollToTop() {
@@ -192,5 +193,12 @@ public class MyWebview extends WebView implements NestedScrollingChild2 {
     @Override
     public void stopNestedScroll(int type) {
 
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+
+        Log.d(TAG, "Canvas canvas: ");
     }
 }

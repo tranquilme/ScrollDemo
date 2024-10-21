@@ -17,14 +17,14 @@
     <com.example.androidstudy.mynestedwebview.MyWebview
         android:id="@+id/my_webview"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="10000dp"
         />
 
     <com.example.androidstudy.mynestedwebview.MyRecyclerView
         android:id="@+id/my_recyclerview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#BBFFFF"
+        android:background="#ffffff"
         />
 
 </com.example.androidstudy.mynestedwebview.NestedViewGroup>

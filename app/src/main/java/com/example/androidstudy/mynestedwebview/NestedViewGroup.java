@@ -30,31 +30,52 @@ public class NestedViewGroup extends LinearLayout implements NestedScrollingPare
     public void onNestedPreScroll(@NonNull View target, int dx, int dy, @NonNull int[] consumed, int type) {
 
         if (target instanceof FirstRecyclerView) {
-            if (getFloorRecyclerView().isScrollToBottom()) {
-                if (dy > 0) {
-                    if (getScrollY() < getFloorRecyclerView().getHeight()) {
-                        int newDY = dy;
-                        if (getScrollY() + dy > getFloorRecyclerView().getHeight()) {
-                            newDY = getFloorRecyclerView().getHeight() - getScrollY();
-                        }
-                        scrollBy(0, newDY);
-                        consumed[1] = newDY;
-                    } else if (getScrollY() < getMaxScrollHeight()){
-                        if (!getWebview().isScrollToBottom()) {
-                            getWebview().scrollBy(0, dy);
-                        } else {
-                            scrollBy(0, dy);
-                        }
-                        consumed[1] = dy;
-                    } else {
-                        getRecommendRecyclerView().scrollBy(0, dy);
-                        consumed[1] = dy;
+            // 在 Floor 上滑有三种情况
+            // 1.滑动自身 =》canScrollUp
+            // 2.滑动Parent
+            // ----Floor 与 Webview 边界滑动 Parent =》[scrollY < FloorHeight && !Floor.canScrollUp]
+            // ----WebView 与 Recommend 边界滑动 Parent =》[scrollY < maxScrollY && !WebView.canScrollUp]
+            // 3.滑动同级View
+            // ----滑动 WebView =》[scrollY == FloorHeight && WebView.canScrollUp]
+            // ----滑动 Recommend =》[scrollY == maxScrollY && Recommend.canScrollUp]
+            if (dy > 0) {
+                if (getFloorRecyclerView().canScrollUp()) {
+                    // 滑动自身
+                } else if (!getFloorRecyclerView().canScrollUp() && getScrollY() < getFloorRecyclerView().getHeight()) {
+                    // 滑动Parent【Floor 与 Webview 边界】
+
+                    if (getScrollY() + dy > getFloorRecyclerView().getHeight()) {
+                        dy = getFloorRecyclerView().getHeight() - getScrollY();
                     }
-                } else if (dy < 0) {
-                    if (getScrollY() > 0) {
-                        scrollBy(0, dy);
-                        consumed[1] = dy;
+
+                    scrollBy(0, dy);
+                    consumed[1] = dy;
+                } else if (getScrollY() == getFloorRecyclerView().getHeight() && getWebview().canScrollUp()) {
+                    // 滑动 WebView
+                    getWebview().scrollBy(0, dy);
+                    consumed[1] = dy;
+                } else if (!getWebview().canScrollUp() && getScrollY() < getMaxScrollHeight()) {
+                    // 滑动 Parent
+
+                    if (getScrollY() + dy > getMaxScrollHeight()) {
+                        dy = getMaxScrollHeight() - getScrollY();
                     }
+
+                    scrollBy(0, dy);
+                    consumed[1] = dy;
+                } else if (getScrollY() == getMaxScrollHeight() && getRecommendRecyclerView().canScrollUp()) {
+                    getRecommendRecyclerView().scrollBy(0, dy);
+                    consumed[1] = dy;
+                }
+            } else if (dy < 0) {
+                // 下滑 Floor 有两种情况
+                // 1.滑动自身 =》scrollY == 0
+                // 2.滑动Parent =》scrollY > 0
+                if (getScrollY() == 0) {
+                    // 滑动自身
+                } else if (getScrollY() > 0) {
+                    scrollBy(0, dy);
+                    consumed[1] = dy;
                 }
             }
 
@@ -62,18 +83,28 @@ public class NestedViewGroup extends LinearLayout implements NestedScrollingPare
 
         if (target instanceof MyWebview) {
             // Webview上滑有三种情况 影响因素【scrollY】【Webview是否滑动到边界】
-            // 1.滑动Parent》[内容滑动到底部] or [scrollY < FloorHeight]
-            // 2.滑动自身》scrollY == FloorHeight
+            // 1.滑动Parent》
+            //   --在 Floor 与 WebView 之间滑动Parent=》scrollY < FloorHeight
+            //   --在 WebView 与 Recommend 之前滑动Parent=》floorHeight <= scrollY < maxScrollHeight && !getWebview().canScrollUp()
+            // 2.滑动自身》scrollY == FloorHeight && canScrollUp
             // 3.滑动Recommend（Fling）》scrollY == FloorHeight + WebviewHeight
 
             if (dy > 0) {
-                // 滑动Parent
-                Log.d(TAG, "(((MyWebview) target).isScrollToBottom(): " + (((MyWebview) target).isScrollToBottom()));
-                if (((MyWebview) target).isScrollToBottom() || getScrollY() < getFloorRecyclerView().getHeight()) {
+                // 滑动Parent[Floor 与 WebView边界]
+                if (getScrollY() < getFloorRecyclerView().getHeight()) {
+
+                    if (getScrollY() + dy > getFloorRecyclerView().getHeight()) {
+                        dy = getFloorRecyclerView().getHeight() - getScrollY();
+                    }
+
                     scrollBy(0, dy);
                     consumed[1] = dy;
-                } else if (getScrollY() == getFloorRecyclerView().getHeight()) {
+                } else if (getScrollY() == getFloorRecyclerView().getHeight() && getWebview().canScrollUp()) {
                     // 滑动自身
+                } else if ((getScrollY() >= getFloorRecyclerView().getHeight() && getScrollY() < getMaxScrollHeight()) && !getWebview().canScrollUp()) {
+                    // 滑动Parent[Webview 与 Recommend边界]
+                    scrollBy(0, dy);
+                    consumed[1] = dy;
                 } else if (getScrollY() == (getFloorRecyclerView().getHeight() + getWebview().getHeight())) {
                     // 滑动Recommend
                     getRecommendRecyclerView().scrollBy(0, dy);
@@ -81,39 +112,76 @@ public class NestedViewGroup extends LinearLayout implements NestedScrollingPare
                 }
             } else if (dy < 0) {
                 // Webview下滑有三种情况 影响因素【scrollY】【Webview是否滑动到边界】
-                // 1.滑动Parent》[内容滑动到Top] or [FloorHeight < scrollY < FloorHeight + WebH]
-                // 2.滑动自身》[scrollY == FloorH and 内容未滑动到Top]
-                // 3.滑动Floor》scrollY == 0
-
+                // 1.滑动Parent-》
+                // ----Floor 与 WebView 边界 -》!webView.canScrollDown
+                // ----WebView 与 Recommend 边界 -》[FloorHeight < scrollY]
+                // 2.滑动自身-》[scrollY == FloorH && webView.canScrollDown]
+                // 3.滑动Floor-》scrollY == 0
                 if (getScrollY() == 0) {
                     // 滑动Floor
                     getFloorRecyclerView().scrollBy(0, dy);
                     consumed[1] = dy;
-                } else if (getWebview().isScrollToTop() ||
-                        (getScrollY() > getFloorRecyclerView().getHeight() && getScrollY() < (getFloorRecyclerView().getHeight() + getWebview().getHeight()))) {
-                    // 滑动Parent
+                } else if (!getWebview().canScrollDown()) {
+                    // 滑动Parent[Floor 与 WebView 边界]
                     scrollBy(0, dy);
                     consumed[1] = dy;
-                } else if (getScrollY() == getFloorRecyclerView().getHeight() && !getWebview().isScrollToTop()) {
+                } else if (getScrollY() == getFloorRecyclerView().getHeight() && getWebview().canScrollDown()) {
                     // 滑动自身
+                } else if (getScrollY() > getFloorRecyclerView().getHeight()) {
+                    // 滑动Parent[WebView 与 Recommend 边界]
+                    if (getScrollY() + dy < getFloorRecyclerView().getHeight()) {
+                        dy = getFloorRecyclerView().getHeight() - getScrollY();
+                    }
+
+                    scrollBy(0, dy);
+                    consumed[1] = dy;
                 }
             }
         }
 
         if (target instanceof MyRecyclerView) {
+            // 推荐容器下滑有四种情况
+            // 1.滑动自身=》[recommend.canScrollDown]
+            // 2.滑动Parent=》
+            // ----Recommend 与 WebView 边界滑动 =》[!recommend.canScrollDown && scrollY > FloorHeight]
+            // ----WebView 与 Floor 边界滑动 =》[!webView.canScrollDown && 0 < scrollY <= FloorHeight]
+            // 3.滑动同级View
+            // ----滑动 WebView =》[scrollY == floorHeight && webView.canScrollDown]
+            // ----滑动 Floor =》[scrollY == 0 && floor.canScrollDown]
             if (dy < 0) {
-                if (getRecommendRecyclerView().isScrollToTop()) {
-                    if (getScrollY() > 0) {
-                        scrollBy(0, dy);
-                        consumed[1] = dy;
-                    } else {
-                        getWebview().scrollBy(0, dy);
-                        consumed[1] = dy;
+                if (getRecommendRecyclerView().canScrollDown()) {
+                    // 滑动自身
+                } else if (!getRecommendRecyclerView().canScrollDown() && getScrollY() > getFloorRecyclerView().getHeight()) {
+                    // 滑动Parent
+                    if (getScrollY() + dy < getFloorRecyclerView().getHeight()) {
+                        dy = getFloorRecyclerView().getHeight() - getScrollY();
                     }
 
+                    scrollBy(0, dy);
+                    consumed[1] = dy;
+                } else if (getScrollY() == getFloorRecyclerView().getHeight() && getWebview().canScrollDown()) {
+                    // 滑动WebView
+                    getWebview().scrollBy(0, dy);
+                    consumed[1] = dy;
+                } else if (!getWebview().canScrollDown() && (getScrollY() > 0 && getScrollY() <= getFloorRecyclerView().getHeight())) {
+                    // 滑动 Parent
+                    if (getScrollY() + dy < 0) {
+                        dy = -getScrollY();
+                    }
+
+                    scrollBy(0, dy);
+                    consumed[1] = dy;
+                } else if (getScrollY() == 0 && getFloorRecyclerView().canScrollDown()) {
+                    getFloorRecyclerView().scrollBy(0, dy);
+                    consumed[1] = dy;
                 }
             } else if (dy > 0) {
-                if (getScrollY() < getWebview().getHeight()) {
+                // 推荐容器上滑有两种情况
+                // 1.滑动自身=》scrollY == maxScrollY
+                // 2.滑动parent=》scrollY < maxScrollY
+                if (getScrollY() == getMaxScrollHeight()) {
+                    // 滑动自身
+                } else if (getScrollY() < getMaxScrollHeight()) {
                     scrollBy(0, dy);
                     consumed[1] = dy;
                 }
